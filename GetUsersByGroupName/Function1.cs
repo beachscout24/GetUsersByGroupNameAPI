@@ -11,12 +11,6 @@ namespace GetUsersByGroupName
 {
     public class GetUsersByGroupName
     {
-        private static readonly string graphApiUrl = "https://graph.microsoft.com/v1.0";
-        private static readonly string tenantId = "df29b2fa-8929-482f-9dbb-60ff4df224c4";
-        private static readonly string clientId = "1c623cd3-98ca-4c7d-b622-93d13cb831c3";
-        private static readonly string clientAppId = "xD28Q~.ksVp.mYgaje0yWtYOkv3X0x8X~Z3bbbs~";
-        private static readonly string graphDefaultUrl = "https://graph.microsoft.com/.default";
-        private static readonly string loginUrl = "https://login.microsoftonline.com";
         private IConfiguration _configuration;
 
         public GetUsersByGroupName(IConfiguration configuration)
@@ -105,11 +99,11 @@ namespace GetUsersByGroupName
         private async Task<string> GetAccessToken()
         {
             var client = new HttpClient();
-            /*string tenantId = _configuration.GetValue<string>("tenantId");
+            string tenantId = _configuration.GetValue<string>("tenantId");
             string graphDefaultUrl = _configuration.GetValue<string>("graphDefaultUrl");
             string loginUrl = _configuration.GetValue<string>("loginUrl");
             string clientId = _configuration.GetValue<string>("clientId");
-            string clientSecret = _configuration.GetValue<string>("clientSecret");*/
+            string clientAppId = _configuration.GetValue<string>("clientSecret");
 
             var tokenEndpoint = $"{loginUrl}/{tenantId}/oauth2/v2.0/token";
 
@@ -126,7 +120,7 @@ namespace GetUsersByGroupName
         {
             var client = new HttpClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-            // string graphApiUrl = _configuration.GetValue<string>("graphApiUrl");
+            string graphApiUrl = _configuration.GetValue<string>("graphApiUrl");
 
             var groupQuery = $"{graphApiUrl}/groups?$filter=displayName eq '{groupName}'&$select=id";
             var groupResponse = await client.GetAsync(groupQuery);
