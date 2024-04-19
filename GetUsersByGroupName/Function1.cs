@@ -6,6 +6,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using GetUsersByGroupName.Models;
+using GetUsersByGroupName.Utilities;
 
 namespace GetUsersByGroupName
 {
@@ -31,15 +32,17 @@ namespace GetUsersByGroupName
             if (string.IsNullOrEmpty(groupName))
             {
                 var response = req.CreateResponse(System.Net.HttpStatusCode.BadRequest);
-                response.WriteString("Please provide a group name.");
+                response.WriteString(Constants.PROVIDEGROUPNAME);
                 return response;
             }
             List<Value> values = [];
             try
             {
+                // break groups into array fro iteration
                 string[] groups = groupName.Split(',');
                 var accessToken = await GetAccessToken();
                 string users = string.Empty;
+                // iterate thru every group and get the members/users for each group
                 foreach ( string group in groups )
                 {
                     users = await GetUsersInGroup(group, accessToken);
@@ -47,24 +50,33 @@ namespace GetUsersByGroupName
                     values.Add(payLoadObject);
                 }
 
+                // format the output to return upns as well as status,message, and group names
                 ResponseObject responseObj = FormatOutput(values, groupName, new Payload());
-                responseObj.message = "Success";
+                responseObj.message = Constants.SUCCESS;
                 string ResponseJsonString = JsonSerializer.Serialize(responseObj);
 
                 var response = req.CreateResponse(HttpStatusCode.OK);
-                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                response.Headers.Add("Content-Type", Constants.CONTENT_TYPE);
                 response.WriteString(ResponseJsonString);
                 return response;
             }
             catch (Exception ex)
             {
-                logger.LogError($"Error: {ex.Message}");
+                logger.LogError($"{Constants.ERROR}{ex.Message}");
                 ResponseObject responseObj = FormatOutput(values, groupName, new Payload());
                 responseObj.status = "500";
-                responseObj.message = "Invalid Request: " + ex.Message;
+                if(ex.Message == Constants.EXCEPTION)
+                {
+                    responseObj.message = Constants.EXCEPTION_MESSAGE;
+                }
+                else
+                {
+                    responseObj.message = $"{Constants.EXCEPTION_PREAMBLE} {ex.Message}";
+                }
+                
                 var response = req.CreateResponse(System.Net.HttpStatusCode.InternalServerError);
                 string ResponseJsonString = JsonSerializer.Serialize(responseObj);
-                response.Headers.Add("Content-Type", "application/json; charset=utf-8");
+                response.Headers.Add("Content-Type", Constants.CONTENT_TYPE);
                 response.WriteString(ResponseJsonString);
                 return response;
             }
@@ -73,7 +85,7 @@ namespace GetUsersByGroupName
         private ResponseObject FormatOutput(List<Value> values, string groupName, Payload payload)
         {
             ResponseObject response = new();
-            response.status = "200";
+            response.status = Constants.TWOHUNDRED;
             payload.upn = [];
             payload.upn.Add(groupName);
             payload.users = [];
@@ -99,11 +111,11 @@ namespace GetUsersByGroupName
         private async Task<string> GetAccessToken()
         {
             var client = new HttpClient();
-            string tenantId = _configuration.GetValue<string>("tenantId");
-            string graphDefaultUrl = _configuration.GetValue<string>("graphDefaultUrl");
-            string loginUrl = _configuration.GetValue<string>("loginUrl");
-            string clientId = _configuration.GetValue<string>("clientId");
-            string clientAppId = _configuration.GetValue<string>("clientSecret");
+            string tenantId = _configuration.GetValue<string>(Constants.TENANTID);
+            string graphDefaultUrl = _configuration.GetValue<string>(Constants.GRAPHDEFAULTURL);
+            string loginUrl = _configuration.GetValue<string>(Constants.LOGINURL);
+            string clientId = _configuration.GetValue<string>(Constants.CLIENTID);
+            string clientAppId = _configuration.GetValue<string>(Constants.CLIENTSECRET);
 
             var tokenEndpoint = $"{loginUrl}/{tenantId}/oauth2/v2.0/token";
 
@@ -113,21 +125,21 @@ namespace GetUsersByGroupName
             var tokenResponse = await response.Content.ReadAsStringAsync();
             var tokenObject = JsonSerializer.Deserialize<JsonElement>(tokenResponse);
 
-            return tokenObject.GetProperty("access_token").GetString()!;
+            return tokenObject.GetProperty(Constants.ACCESSTOKEN).GetString()!;
         }
 
         private async Task<string> GetUsersInGroup(string groupName, string accessToken)
         {
             var client = new HttpClient();
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-            string graphApiUrl = _configuration.GetValue<string>("graphApiUrl");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(Constants.BEARER, accessToken);
+            string graphApiUrl = _configuration.GetValue<string>(Constants.GRAPHAPIURL);
 
             var groupQuery = $"{graphApiUrl}/groups?$filter=displayName eq '{groupName}'&$select=id";
             var groupResponse = await client.GetAsync(groupQuery);
             var groupContent = await groupResponse.Content.ReadAsStringAsync();
             var groupObject = JsonSerializer.Deserialize<JsonElement>(groupContent);
 
-            var groupId = groupObject.GetProperty("value")[0].GetProperty("id").GetString();
+            var groupId = groupObject.GetProperty(Constants.VALUE)[0].GetProperty(Constants.ID).GetString();
 
             var usersQuery = $"{graphApiUrl}/groups/{groupId}/members?$select=id,displayName,userPrincipalName";
             var usersResponse = await client.GetAsync(usersQuery);
