@@ -14,7 +14,7 @@ namespace GetUsersByGroupName
         private static readonly string graphApiUrl = "https://graph.microsoft.com/v1.0";
         private static readonly string tenantId = "df29b2fa-8929-482f-9dbb-60ff4df224c4";
         private static readonly string clientId = "1c623cd3-98ca-4c7d-b622-93d13cb831c3";
-        private static readonly string clientAppId = "";
+        private static readonly string clientAppId = "xD28Q~.ksVp.mYgaje0yWtYOkv3X0x8X~Z3bbbs~";
         private static readonly string graphDefaultUrl = "https://graph.microsoft.com/.default";
         private static readonly string loginUrl = "https://login.microsoftonline.com";
         private IConfiguration _configuration;
