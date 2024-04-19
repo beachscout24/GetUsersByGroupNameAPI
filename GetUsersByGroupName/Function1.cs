@@ -40,13 +40,12 @@ namespace GetUsersByGroupName
                 response.WriteString("Please provide a group name.");
                 return response;
             }
-
+            List<Value> values = [];
             try
             {
                 string[] groups = groupName.Split(',');
                 var accessToken = await GetAccessToken();
                 string users = string.Empty;
-                List<Value> values = [];
                 foreach ( string group in groups )
                 {
                     users = await GetUsersInGroup(group, accessToken);
@@ -66,10 +65,9 @@ namespace GetUsersByGroupName
             catch (Exception ex)
             {
                 logger.LogError($"Error: {ex.Message}");
-                List<Value> values = [];
                 ResponseObject responseObj = FormatOutput(values, groupName, new Payload());
                 responseObj.status = "500";
-                responseObj.message = ex.Message;
+                responseObj.message = "Invalid Request: " + ex.Message;
                 var response = req.CreateResponse(System.Net.HttpStatusCode.InternalServerError);
                 string ResponseJsonString = JsonSerializer.Serialize(responseObj);
                 response.Headers.Add("Content-Type", "application/json; charset=utf-8");
