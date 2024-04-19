@@ -54,8 +54,6 @@ namespace GetUsersByGroupName
                     values.Add(payLoadObject);
                 }
 
-               // Value payLoadObject = JsonSerializer.Deserialize<Value>(users)!;
-
                 ResponseObject responseObj = FormatOutput(values, groupName, new Payload());
                 responseObj.message = "Success";
                 string ResponseJsonString = JsonSerializer.Serialize(responseObj);
